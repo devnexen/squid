@@ -9,25 +9,18 @@
 #ifndef SQUID_SRC_SECURITY_ZEROSENSITIVEMEMORY_H
 #define SQUID_SRC_SECURITY_ZEROSENSITIVEMEMORY_H
 
-#if HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
-#if HAVE_STRING_H
-#include <string.h>
-#endif
-
-#include <stdexcept>
+#include <cstring>
 
 namespace Security {
 
-inline static void
+inline void
 ZeroSensitiveMemory(void *dst, const size_t len)
 {
+    if (!len)
+        return;
+
     if (!dst)
-        throw std::runtime_error("Cannot clear a null buffer");
-    if (len > SIZE_MAX)
-        throw std::runtime_error("Cannot clear a buffer of length exceeding SIZE_MAX");
+        return;
 
     /**
      * to zero a buffer in a more secure manner meant for a handful of purposes.
@@ -39,8 +32,8 @@ ZeroSensitiveMemory(void *dst, const size_t len)
      * thus it is not mean as memset replacement which would cause a performance
      * drop.
      */
-    void *(*volatile memset_fn)(void *, int, size_t) = &memset;
-    (void)memset_fn(dst, 0, len);
+    volatile const auto setMemory = &std::memset;
+    (void)setMemory(dst, 0, len);
 }
 
 } // namespace Security
